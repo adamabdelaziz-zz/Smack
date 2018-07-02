@@ -6,39 +6,43 @@ import android.os.Bundle
 import android.view.View
 import com.androidadam.smack.R
 import com.androidadam.smack.services.AuthService
+import com.androidadam.smack.services.UserDataService
 import kotlinx.android.synthetic.main.activity_create_user.*
 import java.util.*
 
 class CreateUserActivity : AppCompatActivity() {
 
-    var userAvatar ="profileDefault"
-    var avatarColor ="[0.5, 0.5, 0.5, 1]"
+    var userAvatar = "profileDefault"
+    var avatarColor = "[0.5, 0.5, 0.5, 1]"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_user)
     }
 
-    fun generateUserAvatar(view: View){
+    fun generateUserAvatar(view: View) {
         val random = Random()
         val color = random.nextInt(2) //parameter is upper bound, not included. so this generates either 0 or 1
         val avatar = random.nextInt(28)// 28 images, 0-27. generates 0-27
 
-        if(color == 0){ userAvatar ="light$avatar"}
-        else{ userAvatar="light$avatar"}
+        if (color == 0) {
+            userAvatar = "light$avatar"
+        } else {
+            userAvatar = "light$avatar"
+        }
 
-        val resourceID = resources.getIdentifier(userAvatar,"drawable", packageName)
+        val resourceID = resources.getIdentifier(userAvatar, "drawable", packageName)
         createAvatarImageView.setImageResource(resourceID)
 
     }
 
-    fun generateColorClicked(view: View){
+    fun generateColorClicked(view: View) {
         val random = Random()
         val r = random.nextInt(255)
         val g = random.nextInt(255)
         val b = random.nextInt(255)
 
-        createAvatarImageView.setBackgroundColor(Color.rgb(r,g,b))
+        createAvatarImageView.setBackgroundColor(Color.rgb(r, g, b))
         val savedR = r.toDouble() / 255
         val savedG = g.toDouble() / 255
         val savedB = b.toDouble() / 255
@@ -46,16 +50,23 @@ class CreateUserActivity : AppCompatActivity() {
         avatarColor = "[$savedR, $savedG, $savedB, 1]"
     }
 
-    fun createUserClicked(view: View){
+    fun createUserClicked(view: View) {
         val email = createEmailText.text.toString()
         val password = createPasswordText.text.toString()
+        val userName = createUserNameText.text.toString()
 
-        AuthService.registerUser(this, email, password){registerSuccess->
-            if(registerSuccess){
-                AuthService.loginUser(this,email,password){loginSuccess->
-                    if(loginSuccess)
-                    {
-
+        AuthService.registerUser(this, email, password) { registerSuccess ->
+            if (registerSuccess) {
+                AuthService.loginUser(this, email, password) { loginSuccess ->
+                    if (loginSuccess) {
+                        AuthService.createUser(this, userName, email, userAvatar, avatarColor) { createSuccess ->
+                            if (createSuccess) {
+                                println(UserDataService.avatarName)
+                                println(UserDataService.avatarColor)
+                                println(UserDataService.name)
+                                finish()
+                            }
+                        }
                     }
                 }
             }
