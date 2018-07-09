@@ -1,6 +1,7 @@
 package com.androidadam.smack.services
 
 import android.graphics.Color
+import com.androidadam.smack.controller.App
 import java.util.*
 
 object UserDataService {
@@ -17,9 +18,9 @@ object UserDataService {
         var avatarName = ""
         var email = ""
         var name = ""
-        AuthService.authToken = ""
-        AuthService.userEmail = ""
-        AuthService.isLoggedin = false
+        App.sharedPreferences.authToken = ""
+        App.sharedPreferences.userEmail = ""
+        App.sharedPreferences.isLoggedIn = false
 
     }
     fun returnAvatarColor(components: String): Int{
