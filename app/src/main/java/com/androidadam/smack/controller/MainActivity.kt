@@ -11,13 +11,17 @@ import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.LinearLayoutManager
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
 import com.androidadam.smack.R
+import com.androidadam.smack.adapters.MessageAdapter
 import com.androidadam.smack.model.Channel
+import com.androidadam.smack.model.Message
 import com.androidadam.smack.services.AuthService
 import com.androidadam.smack.services.MessageService
 import com.androidadam.smack.services.UserDataService
@@ -27,6 +31,7 @@ import io.socket.client.IO
 import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
+import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 
@@ -34,10 +39,18 @@ class MainActivity : AppCompatActivity(){
 
     val socket = IO.socket(SOCKET_URL)
     lateinit var channelAdapater: ArrayAdapter<Channel>
+    lateinit var  messageAdapter: MessageAdapter
+    var selectedChannel: Channel? = null
 
     private fun setupAdapters(){
         channelAdapater = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
         channel_list.adapter = channelAdapater
+
+        messageAdapter = MessageAdapter(this,MessageService.messages)
+        messageListView.adapter = messageAdapter
+        val layoutManager = LinearLayoutManager(this)
+        messageListView.layoutManager = layoutManager
+
 
     }
 
@@ -47,8 +60,13 @@ class MainActivity : AppCompatActivity(){
         setSupportActionBar(toolbar)
         socket.connect()
         socket.on("channelCreated", onNewChannel)
+        socket.on("messageCreated", onNewMessage)
 
-
+        channel_list.setOnItemClickListener{adapterView, view, i, l ->
+            selectedChannel = MessageService.channels[i]
+            drawer_layout.closeDrawer(GravityCompat.START)
+            updateWithChannel()
+        }
         val toggle = ActionBarDrawerToggle(
                 this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
@@ -82,13 +100,33 @@ class MainActivity : AppCompatActivity(){
                userImageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
                loginButtonNavHeader.text = "Logout"
 
-               MessageService.getChannels(context){
+               MessageService.getChannels{
                    if (it){
-                       channelAdapater.notifyDataSetChanged()
+                       if(MessageService.channels.count() > 0){
+                           selectedChannel = MessageService.channels[0]
+                           channelAdapater.notifyDataSetChanged()
+                           updateWithChannel()
+                       }
+
+
                    }
                }
 
            }
+        }
+    }
+
+    fun updateWithChannel(){
+        mainChannelName.text = "${selectedChannel?.name}"
+        if(selectedChannel != null){
+            MessageService.getMessages(selectedChannel!!.id){
+                if(it){
+                     messageAdapter.notifyDataSetChanged()
+                    if(messageAdapter.itemCount > 0){
+                        messageListView.smoothScrollToPosition(messageAdapter.itemCount-1)
+                    }
+                }
+            }
         }
     }
     override fun onBackPressed() {
@@ -102,6 +140,8 @@ class MainActivity : AppCompatActivity(){
     fun loginButtonNavClicked(view: View){
         if(App.sharedPreferences.isLoggedIn){
             UserDataService.logout()
+            channelAdapater.notifyDataSetChanged()
+            messageAdapter.notifyDataSetChanged()
             userNameNavHeader.text =""
             userEmailNavHeader.text = ""
             userImageNavHeader.setImageResource(R.drawable.profiledefault)
@@ -142,7 +182,8 @@ class MainActivity : AppCompatActivity(){
     }
 
     private val onNewChannel = Emitter.Listener { args ->
-        runOnUiThread{
+        if(App.sharedPreferences.isLoggedIn){
+            runOnUiThread{
             val channelName = args[0] as String
             val channelDescription = args[1] as String
             val channelId = args[2] as String
@@ -151,10 +192,38 @@ class MainActivity : AppCompatActivity(){
             MessageService.channels.add(newChannel)
             channelAdapater.notifyDataSetChanged()
         }
+        }
+    }
+
+    private val onNewMessage = Emitter.Listener {
+        if(App.sharedPreferences.isLoggedIn){
+        runOnUiThread{
+            val channelId = it[2] as String
+            if(channelId== selectedChannel?.id){
+                val msgBody = it[0] as String
+                val userName = it[3] as String
+                val userAvatar = it[4]  as String
+                val userAvatarColor = it[5]  as String
+                val id = it[6]  as String
+                val timeStamp = it[7]  as String
+                val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
+                MessageService.messages.add(newMessage)
+                messageAdapter.notifyDataSetChanged()
+                messageListView.smoothScrollToPosition(messageAdapter.itemCount-1)
+            }
+        }
+        }
     }
 
     fun sendMessageButtonClicked(view: View){
-        hideKeyboard()
+        if(App.sharedPreferences.isLoggedIn && messageTextField.text.isNotEmpty() && selectedChannel != null){
+            val userId = UserDataService.id
+            val channelId = selectedChannel!!.id
+            socket.emit("newMessage", messageTextField.text.toString(), userId, channelId, UserDataService.name, UserDataService.avatarName, UserDataService.avatarColor)
+            messageTextField.text.clear()
+            hideKeyboard()
+        }
+
     }
 
     fun hideKeyboard(){
