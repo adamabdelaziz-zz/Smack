@@ -72,16 +72,11 @@ class MainActivity : AppCompatActivity(){
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
         setupAdapters()
+        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
 
         if(App.sharedPreferences.isLoggedIn){
             AuthService.findUserByEmail(this){}
         }
-    }
-
-    override fun onResume(){
-        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
-        super.onResume()
-
     }
 
     override fun onDestroy() {
@@ -147,6 +142,7 @@ class MainActivity : AppCompatActivity(){
             userImageNavHeader.setImageResource(R.drawable.profiledefault)
             userImageNavHeader.setBackgroundColor(Color.TRANSPARENT)
             loginButtonNavHeader.text = "Log In"
+            mainChannelName.text = "Please log in"
         }else {
             val loginIntent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
@@ -154,7 +150,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     fun addChannelClicked(view: View){
-        if(App.sharedPreferences.isLoggedIn){
+        if(App.sharedPreferences.isLoggedIn){x
             val builder = AlertDialog.Builder(this)
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog,null)
 
