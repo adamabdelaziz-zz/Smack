@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
@@ -33,11 +34,11 @@ class LoginActivity : AppCompatActivity() {
                             enableSpinner(false)
                             finish()
                         } else {
-                            errorToast()
+                            errorToastSus()
                         }
                     }
                 } else {
-                    errorToast()
+                    errorToastTw()
                 }
             }
         } else {
@@ -48,12 +49,24 @@ class LoginActivity : AppCompatActivity() {
 
     fun loginCreateUserButtonClicked(view: View) {
         val createUserIntent = Intent(this, CreateUserActivity::class.java)
+        ContextCompat.startForegroundService(this, createUserIntent)
         startActivity(createUserIntent)
         finish()
     }
 
     fun errorToast() {
         Toast.makeText(this, "Something went wrong, please try again.", Toast.LENGTH_LONG).show()
+        enableSpinner(false)
+    }
+
+    fun errorToastTw() {
+        Toast.makeText(this, "DJ Sus One, please try again.", Toast.LENGTH_LONG).show()
+        enableSpinner(false)
+    }
+
+
+    fun errorToastSus() {
+        Toast.makeText(this, "Lemme get uhhh.", Toast.LENGTH_LONG).show()
         enableSpinner(false)
     }
 

@@ -2,6 +2,7 @@ package com.androidadam.smack.services
 
 import android.content.Context
 import android.content.Intent
+import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import com.android.volley.Response
@@ -115,7 +116,7 @@ object AuthService {
 
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
-                headers.put("Authorization", "Bearer ${App.sharedPreferences.authToken}")
+                headers["Authorization"] = "Bearer ${App.sharedPreferences.authToken}"
                 return headers
             }
         }
@@ -132,6 +133,7 @@ object AuthService {
                 UserDataService.id = response.getString("_id")
 
                 val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)
+                ContextCompat.startForegroundService(context, userDataChange)
                 LocalBroadcastManager.getInstance(context).sendBroadcast(userDataChange)
                 complete(true)
 
@@ -148,7 +150,7 @@ object AuthService {
 
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
-                headers.put("Authorization", "Bearer $App.sharedPreferences.authToken")
+                headers["Authorization"] = "Bearer $App.sharedPreferences.authToken"
                 return headers
             }
         }

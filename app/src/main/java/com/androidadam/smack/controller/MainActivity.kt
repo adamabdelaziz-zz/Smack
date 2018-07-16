@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
@@ -145,12 +146,13 @@ class MainActivity : AppCompatActivity(){
             mainChannelName.text = "Please log in"
         }else {
             val loginIntent = Intent(this, LoginActivity::class.java)
+            ContextCompat.startForegroundService(this, loginIntent)
             startActivity(loginIntent)
         }
     }
 
     fun addChannelClicked(view: View){
-        if(App.sharedPreferences.isLoggedIn){x
+        if(App.sharedPreferences.isLoggedIn){
             val builder = AlertDialog.Builder(this)
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog,null)
 
